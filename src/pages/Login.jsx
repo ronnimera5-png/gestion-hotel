@@ -38,7 +38,7 @@ export default function Login() {
             id="username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder="admin"
+            placeholder="Ingrese su Usuario"
           />
 
           <label htmlFor="password">Contraseña:</label>
@@ -47,7 +47,7 @@ export default function Login() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="1234"
+            placeholder="Ingrese su Contraseña"
           />
 
           <button type="submit">Ingresar</button>

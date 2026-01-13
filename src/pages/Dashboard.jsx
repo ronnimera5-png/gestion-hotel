@@ -226,7 +226,7 @@ export default function Dashboard() {
             </Link>
           </li>
           <li>
-            <Link to="/login">
+            <Link to="/inicio">
               Cerrar sesión
             </Link>
           </li>

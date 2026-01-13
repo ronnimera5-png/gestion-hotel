@@ -152,17 +152,81 @@ export default function Reservas() {
 
   // ========== FUNCIONES PARA RESERVAS ==========
   
-  const cargarReservas = () => {
-    const data = localStorage.getItem("reservasAdmin");
-    if (data) {
-      try {
-        const parsed = JSON.parse(data);
-        setReservas(parsed);
-      } catch (error) {
-        console.error("Error cargando reservas:", error);
-        setReservas([]);
+  const cargarReservas = async () => {
+    try {
+      // 1. Primero intentar cargar desde localStorage
+      const datosLocal = localStorage.getItem("reservasAdmin");
+      
+      if (datosLocal) {
+        try {
+          const parsed = JSON.parse(datosLocal);
+          if (parsed.length > 0) {
+            console.log("✅ Reservas cargadas de localStorage:", parsed.length);
+            setReservas(parsed);
+            return;
+          }
+        } catch (error) {
+          console.error("Error parseando localStorage:", error);
+        }
       }
-    } else {
+      
+      // 2. Si no hay en localStorage, cargar del JSON
+      console.log("📭 Cargando reservas del JSON...");
+      
+      let jsonData = [];
+      try {
+        // Intentar diferentes rutas
+        const rutas = [
+          '/data/reservas.json',
+          './data/reservas.json',
+          '../data/reservas.json'
+        ];
+        
+        for (const ruta of rutas) {
+          try {
+            const response = await fetch(ruta);
+            if (response.ok) {
+              jsonData = await response.json();
+              console.log("🎉 JSON cargado desde:", ruta);
+              break;
+            }
+          } catch (error) {
+            continue;
+          }
+        }
+        
+        // Si no se cargó nada, usar datos de emergencia
+        if (jsonData.length === 0) {
+          jsonData = [
+            {
+              id: 1,
+              cliente: "Juan Pérez",
+              cedula: "0102030405",
+              ingreso: "2025-01-10",
+              salida: "2025-01-12",
+              tipoHabitacion: "Suite",
+              numeroHabitacion: "201",
+              precioNoche: 120,
+              adultos: 2,
+              ninos: 1,
+              estado: "Confirmada",
+              origen: "JSON inicial"
+            }
+          ];
+        }
+      } catch (error) {
+        console.error("Error cargando JSON:", error);
+        jsonData = [];
+      }
+      
+      // 3. Guardar en localStorage para la próxima vez
+      localStorage.setItem("reservasAdmin", JSON.stringify(jsonData));
+      
+      // 4. Actualizar estado
+      setReservas(jsonData);
+      
+    } catch (error) {
+      console.error("❌ ERROR en carga de reservas:", error);
       setReservas([]);
     }
   };
