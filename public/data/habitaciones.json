@@ -1,38 +1,44 @@
 [
   {
+    "id": 1,
     "numero": "101",
-    "tipo": "Individual",
-    "precio": 45,
+    "tipo": "individual",
+    "precio": 50,
     "estado": "Disponible"
   },
   {
+    "id": 2,
     "numero": "102",
-    "tipo": "Individual",
-    "precio": 45,
-    "estado": "En Mantenimiento"
+    "tipo": "individual",
+    "precio": 50,
+    "estado": "Disponible"
   },
   {
+    "id": 3,
     "numero": "201",
-    "tipo": "Doble",
-    "precio": 70,
+    "tipo": "doble",
+    "precio": 80,
     "estado": "Disponible"
   },
   {
+    "id": 4,
     "numero": "202",
-    "tipo": "Doble",
-    "precio": 70,
-    "estado": "Ocupada"
-  },
-  {
-    "numero": "301",
-    "tipo": "Suite",
-    "precio": 120,
+    "tipo": "doble",
+    "precio": 80,
     "estado": "Disponible"
   },
   {
+    "id": 5,
+    "numero": "301",
+    "tipo": "suite",
+    "precio": 150,
+    "estado": "Disponible"
+  },
+  {
+    "id": 6,
     "numero": "302",
-    "tipo": "Suite",
-    "precio": 120,
-    "estado": "Ocupada"
+    "tipo": "suite",
+    "precio": 150,
+    "estado": "Disponible"
   }
 ]

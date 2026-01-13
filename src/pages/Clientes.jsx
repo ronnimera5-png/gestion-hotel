@@ -256,35 +256,6 @@ export default function Clientes() {
 
   return (
     <>
-      {/* Botones de depuración (opcional) */}
-      <div style={{ 
-        backgroundColor: "#f8f9fa", 
-        padding: "10px", 
-        borderRadius: "8px", 
-        marginBottom: "10px",
-        border: "1px solid #ddd"
-      }}>
-        <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
-          <button 
-            className="btn" 
-            onClick={() => console.log("📊 Clientes:", clientes)}
-            style={{ backgroundColor: "#3498db", padding: "5px 10px", fontSize: "12px" }}
-          >
-            👁️ Ver Datos
-          </button>
-          <button 
-            className="btn" 
-            onClick={() => {
-              localStorage.removeItem("clientes");
-              window.location.reload();
-            }}
-            style={{ backgroundColor: "#e74c3c", padding: "5px 10px", fontSize: "12px" }}
-          >
-            🗑️ Limpiar Storage
-          </button>
-        </div>
-      </div>
-
       <nav className="sidebar">
         <h2>Hotel ULEAM</h2>
         <ul>

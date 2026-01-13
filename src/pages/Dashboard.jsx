@@ -11,7 +11,7 @@ import {
   Legend,
   ArcElement
 } from 'chart.js';
-import { Bar, Pie } from 'react-chartjs-2';
+import { Pie } from 'react-chartjs-2';
 import "../styles/main.css";
 import "../styles/dashboard.css";
 
@@ -28,8 +28,9 @@ ChartJS.register(
 export default function Dashboard() {
   const [currentTime, setCurrentTime] = useState("");
   const [solicitudesPendientes, setSolicitudesPendientes] = useState([]);
-  const [reservasConfirmadas, setReservasConfirmadas] = useState([]);
   const [todasLasReservas, setTodasLasReservas] = useState([]);
+  const [habitaciones, setHabitaciones] = useState([]);
+  const [clientes, setClientes] = useState([]);
   const location = useLocation();
 
   // Cargar y actualizar datos en tiempo real
@@ -57,25 +58,38 @@ export default function Dashboard() {
         }
       }
 
+      // Cargar habitaciones
+      const dataHabitaciones = localStorage.getItem("habitaciones");
+      let habitacionesData = [];
+      if (dataHabitaciones) {
+        try {
+          habitacionesData = JSON.parse(dataHabitaciones);
+        } catch (error) {
+          console.error("Error cargando habitaciones:", error);
+        }
+      }
+      setHabitaciones(habitacionesData);
+
+      // Cargar clientes
+      const dataClientes = localStorage.getItem("clientes");
+      let clientesData = [];
+      if (dataClientes) {
+        try {
+          clientesData = JSON.parse(dataClientes);
+        } catch (error) {
+          console.error("Error cargando clientes:", error);
+        }
+      }
+      setClientes(clientesData);
+
       // Separar solicitudes pendientes
       const pendientes = solicitudesData.filter(s => 
         s.estado === "Pendiente" || !s.estado
       );
       setSolicitudesPendientes(pendientes);
 
-      // Separar reservas confirmadas
-      const confirmadas = reservasData.filter(r => 
-        r.estado === "Confirmada"
-      );
-      setReservasConfirmadas(confirmadas);
-
-      // Todas las reservas (incluyendo pendientes, confirmadas, denegadas)
+      // Todas las reservas
       setTodasLasReservas(reservasData);
-
-      console.log("📊 Datos actualizados:");
-      console.log("- Solicitudes pendientes:", pendientes.length);
-      console.log("- Reservas confirmadas:", confirmadas.length);
-      console.log("- Total reservas:", reservasData.length);
     };
 
     // Cargar datos iniciales
@@ -85,17 +99,16 @@ export default function Dashboard() {
     updateTime();
     const timeInterval = setInterval(updateTime, 1000);
 
-    // Escuchar cambios en localStorage (para actualizar en tiempo real)
+    // Escuchar cambios en localStorage
     const handleStorageChange = (e) => {
-      if (e.key === "solicitudes" || e.key === "reservasAdmin") {
-        console.log(`🔄 Cambio detectado en ${e.key}, actualizando dashboard...`);
+      if (e.key === "solicitudes" || e.key === "reservasAdmin" || e.key === "habitaciones" || e.key === "clientes") {
         cargarDatos();
       }
     };
 
     window.addEventListener("storage", handleStorageChange);
 
-    // Polling: verificar cambios cada 2 segundos (para cambios en la misma pestaña)
+    // Polling: verificar cambios cada 2 segundos
     const pollingInterval = setInterval(cargarDatos, 2000);
 
     return () => {
@@ -110,105 +123,80 @@ export default function Dashboard() {
     setCurrentTime(now.toLocaleString("es-ES"));
   };
 
-  // ========== ESTADÍSTICAS ACTUALIZADAS ==========
+  // ========== ESTADÍSTICAS SIMPLIFICADAS ==========
   
+  // Calcular estadísticas básicas
+  const habitacionesDisponibles = habitaciones.filter(h => h.estado === "Disponible").length;
+  const habitacionesOcupadas = habitaciones.filter(h => h.estado === "Ocupada").length;
+  const reservasConfirmadas = todasLasReservas.filter(r => r.estado === "Confirmada").length;
+
   const estadisticas = {
-    // 1. TOTAL DE RESERVAS (confirmadas + pendientes + denegadas)
-    totalReservas: todasLasReservas.length,
+    // 1. HABITACIONES
+    habitacionesTotal: habitaciones.length,
+    habitacionesDisponibles: habitacionesDisponibles,
+    habitacionesOcupadas: habitacionesOcupadas,
     
-    // 2. SOLICITUDES PENDIENTES de la web
+    // 2. RESERVAS
+    totalReservas: todasLasReservas.length,
+    reservasConfirmadas: reservasConfirmadas,
+    
+    // 3. CLIENTES
+    totalClientes: clientes.length,
+    
+    // 4. SOLICITUDES
     solicitudesPendientes: solicitudesPendientes.length,
     
-    // 3. RESERVAS CONFIRMADAS (aceptadas por admin)
-    reservasConfirmadas: reservasConfirmadas.length,
-    
-    // 4. Distribución por tipo de habitación (de reservas confirmadas)
-    individual: reservasConfirmadas.filter(r => 
-      r.habitacion === "individual" || r.tipo === "Individual"
-    ).length,
-    doble: reservasConfirmadas.filter(r => 
-      r.habitacion === "doble" || r.tipo === "Doble"
-    ).length,
-    suite: reservasConfirmadas.filter(r => 
-      r.habitacion === "suite" || r.tipo === "Suite"
-    ).length,
-    
-    // 5. Distribución por estado
-    reservasPendientes: todasLasReservas.filter(r => r.estado === "Pendiente").length,
-    reservasDenegadas: todasLasReservas.filter(r => r.estado === "Denegada").length,
-    
-    // 6. Origen de las reservas
-    reservasDeWeb: todasLasReservas.filter(r => r.origen === "Solicitud Web").length,
-    reservasDeAdmin: todasLasReservas.filter(r => 
-      r.origen === "Formulario Admin" || !r.origen
-    ).length
+    // 5. TASA DE OCUPACIÓN
+    tasaOcupacionTotal: habitaciones.length > 0 
+      ? Math.round((habitacionesOcupadas / habitaciones.length) * 100) 
+      : 0
   };
 
-  // ========== DATOS PARA GRÁFICOS DINÁMICOS ==========
+  // ========== GRÁFICOS SIMPLIFICADOS ==========
   
-  // Gráfico 1: Distribución por tipo de habitación (CON DATOS REALES)
-  const ocupacionData = {
-    labels: ['Individual', 'Doble', 'Suite'],
+  // Solo 2 gráficos esenciales
+  const estadoHotelData = {
+    labels: ['Disponibles', 'Ocupadas'],
     datasets: [{
-      label: 'Reservas Confirmadas por Tipo',
+      label: 'Estado de Habitaciones',
       data: [
-        estadisticas.individual,
-        estadisticas.doble,
-        estadisticas.suite
+        estadisticas.habitacionesDisponibles,
+        estadisticas.habitacionesOcupadas
       ],
       backgroundColor: [
-        '#3498db', // Azul para Individual
-        '#2ecc71', // Verde para Doble
-        '#e74c3c'  // Rojo para Suite
+        '#2ecc71', // Verde para Disponibles
+        '#e74c3c'  // Rojo para Ocupadas
       ],
       borderWidth: 1
     }]
   };
 
-  // Gráfico 2: Estado de las reservas
   const estadoReservasData = {
-    labels: ['Confirmadas', 'Pendientes', 'Denegadas'],
+    labels: ['Confirmadas', 'Totales'],
     datasets: [{
       label: 'Estado de Reservas',
       data: [
         estadisticas.reservasConfirmadas,
-        estadisticas.reservasPendientes,
-        estadisticas.reservasDenegadas
+        estadisticas.totalReservas
       ],
       backgroundColor: [
         '#2ecc71', // Verde para Confirmadas
-        '#f39c12', // Naranja para Pendientes
-        '#e74c3c'  // Rojo para Denegadas
+        '#3498db'  // Azul para Totales
       ]
     }]
-  };
-
-  // Gráfico 3: Reservas por día (datos de ejemplo mejorados)
-  const reservasPorDiaData = {
-    labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
-    datasets: [{
-      label: 'Reservas esta semana',
-      // Usar datos reales si hay, sino de ejemplo
-      data: estadisticas.totalReservas > 0 
-        ? [3, 5, 2, 6, 8, 10, 4] // Datos de ejemplo basados en tendencia
-        : [2, 4, 1, 3, 5, 7, 2],
-      backgroundColor: '#3498db',
-      borderColor: '#2980b9',
-      borderWidth: 1
-    }]
-  };
-
-  const barOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    scales: { y: { beginAtZero: true } }
   };
 
   const pieOptions = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { position: 'bottom' }
+      legend: { 
+        position: 'bottom',
+        labels: {
+          padding: 15,
+          font: { size: 12 }
+        }
+      }
     }
   };
 
@@ -249,11 +237,20 @@ export default function Dashboard() {
         <section id="home" className="section">
           <h2>📊 Dashboard - Hotel ULEAM</h2>
           
-          {/* RESUMEN PRINCIPAL */}
+          {/* RESUMEN PRINCIPAL - 4 ESTADÍSTICAS BÁSICAS */}
           <div className="summary">
             <div className="box">
+              <div className="stat-icon">🏨</div>
+              <h3>Habitaciones</h3>
+              <p className="stat-number">{estadisticas.habitacionesTotal}</p>
+              <p className="stat-subtitle">
+                {estadisticas.tasaOcupacionTotal}% ocupación
+              </p>
+            </div>
+            
+            <div className="box">
               <div className="stat-icon">📋</div>
-              <h3>Total de Reservas</h3>
+              <h3>Reservas</h3>
               <p className="stat-number">{estadisticas.totalReservas}</p>
               <p className="stat-subtitle">
                 {estadisticas.reservasConfirmadas} confirmadas
@@ -261,148 +258,55 @@ export default function Dashboard() {
             </div>
             
             <div className="box">
+              <div className="stat-icon">👥</div>
+              <h3>Clientes</h3>
+              <p className="stat-number">{estadisticas.totalClientes}</p>
+              <p className="stat-subtitle">Registrados</p>
+            </div>
+            
+            <div className="box">
               <div className="stat-icon">⏳</div>
-              <h3>Solicitudes Pendientes</h3>
+              <h3>Solicitudes</h3>
               <p className="stat-number">{estadisticas.solicitudesPendientes}</p>
-              <p className="stat-subtitle">Por revisar</p>
-            </div>
-            
-            <div className="box">
-              <div className="stat-icon">✅</div>
-              <h3>Reservas Confirmadas</h3>
-              <p className="stat-number">{estadisticas.reservasConfirmadas}</p>
-              <p className="stat-subtitle">
-                {estadisticas.reservasDeWeb} de web, {estadisticas.reservasDeAdmin} de admin
-              </p>
+              <p className="stat-subtitle">Pendientes</p>
             </div>
           </div>
           
-          {/* DISTRIBUCIÓN POR TIPO DE HABITACIÓN */}
-          <div className="summary">
-            <div className="box">
-              <div className="stat-icon">🏨</div>
-              <h3>Habitaciones Individuales</h3>
-              <p className="stat-number">{estadisticas.individual}</p>
-              <p className="stat-subtitle">Reservadas</p>
-            </div>
-            
-            <div className="box">
-              <div className="stat-icon">🛌</div>
-              <h3>Habitaciones Dobles</h3>
-              <p className="stat-number">{estadisticas.doble}</p>
-              <p className="stat-subtitle">Reservadas</p>
-            </div>
-            
-            <div className="box">
-              <div className="stat-icon">⭐</div>
-              <h3>Suites</h3>
-              <p className="stat-number">{estadisticas.suite}</p>
-              <p className="stat-subtitle">Reservadas</p>
-            </div>
-          </div>
-          
-          {/* GRÁFICOS */}
+          {/* GRÁFICOS PRINCIPALES - 2 GRÁFICOS SIMPLES */}
           <div className="charts">
             <div className="chart-box">
-              <h3>📈 Distribución por Tipo de Habitación</h3>
-              <div style={{ width: '100%', height: '350px' }}>
-                <Pie data={ocupacionData} options={pieOptions} />
+              <h3>🏨 Estado de Habitaciones</h3>
+              <div style={{ width: '100%', height: '300px' }}>
+                <Pie data={estadoHotelData} options={pieOptions} />
               </div>
-              <p className="chart-footer">
-                Total: {estadisticas.individual + estadisticas.doble + estadisticas.suite} habitaciones reservadas
-              </p>
             </div>
             
             <div className="chart-box">
-              <h3>📊 Estado de las Reservas</h3>
-              <div style={{ width: '100%', height: '350px' }}>
+              <h3>📊 Estado de Reservas</h3>
+              <div style={{ width: '100%', height: '300px' }}>
                 <Pie data={estadoReservasData} options={pieOptions} />
               </div>
-              <p className="chart-footer">
-                Confirmadas: {estadisticas.reservasConfirmadas} | 
-                Pendientes: {estadisticas.reservasPendientes} | 
-                Denegadas: {estadisticas.reservasDenegadas}
-              </p>
-            </div>
-            
-            <div className="chart-box">
-              <h3>📅 Reservas por Día (Semana Actual)</h3>
-              <div style={{ width: '100%', height: '350px' }}>
-                <Bar data={reservasPorDiaData} options={barOptions} />
-              </div>
-              <p className="chart-footer">
-                Total semana: {reservasPorDiaData.datasets[0].data.reduce((a, b) => a + b, 0)} reservas
-              </p>
             </div>
           </div>
 
-          {/* NOTIFICACIONES DINÁMICAS */}
-          <div className="notifications">
-            <h3>🔔 Notificaciones</h3>
-            <ul>
-              {estadisticas.solicitudesPendientes > 0 ? (
-                <li className="notification-item alert">
-                  <strong>{estadisticas.solicitudesPendientes} solicitudes</strong> pendientes de revisión en la web
-                </li>
-              ) : (
-                <li className="notification-item success">
-                  ✅ No hay solicitudes pendientes
-                </li>
-              )}
-              
-              {estadisticas.reservasConfirmadas > 0 ? (
-                <li className="notification-item info">
-                  📊 <strong>{estadisticas.reservasConfirmadas} reservas confirmadas</strong> en el sistema
-                </li>
-              ) : (
-                <li className="notification-item">
-                  ℹ️ Aún no hay reservas confirmadas
-                </li>
-              )}
-              
-              <li className="notification-item">
-                🏨 Habitación más solicitada: {
-                  estadisticas.individual > estadisticas.doble && estadisticas.individual > estadisticas.suite 
-                    ? "Individual" 
-                    : estadisticas.doble > estadisticas.suite 
-                    ? "Doble" 
-                    : "Suite"
-                }
-              </li>
-              
-              <li className="notification-item">
-                📈 Tasa de conversión: {
-                  estadisticas.totalReservas > 0 
-                    ? `${Math.round((estadisticas.reservasConfirmadas / estadisticas.totalReservas) * 100)}%`
-                    : "0%"
-                } de reservas confirmadas
-              </li>
-            </ul>
-          </div>
-
-          {/* BOTONES RÁPIDOS */}
+          {/* BOTONES DE ACCIÓN RÁPIDA */}
           <div className="quick-links">
             <Link to="/reservas" className="btn">
               📋 Gestionar Reservas
             </Link>
-            {estadisticas.solicitudesPendientes > 0 && (
-              <Link to="/reservas" className="btn highlight">
-                ⏳ Revisar Solicitudes ({estadisticas.solicitudesPendientes})
-              </Link>
-            )}
-            <button 
-              className="btn" 
-              onClick={() => window.location.reload()}
-            >
-              🔄 Actualizar Datos
-            </button>
+            <Link to="/habitaciones" className="btn">
+              🏨 Ver Habitaciones
+            </Link>
+            <Link to="/clientes" className="btn">
+              👥 Ver Clientes
+            </Link>
           </div>
 
-          {/* HORA ACTUAL */}
+          {/* INFORMACIÓN DEL SISTEMA */}
           <div className="current-time">
-            <p>🕐 Fecha y hora actual: <strong>{currentTime}</strong></p>
+            <p>🕐 <strong>{currentTime}</strong></p>
             <p className="update-info">
-              Última actualización: {new Date().toLocaleTimeString('es-ES')}
+              Sistema actualizado: {new Date().toLocaleTimeString('es-ES')}
             </p>
           </div>
         </section>

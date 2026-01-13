@@ -1,9 +1,11 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "../styles/inicio.css";
 
 export default function Inicio() {
+  const navigate = useNavigate();
+  
   // Sección activa (igual a tu JS)
   const [section, setSection] = useState("inicio");
   const [msg, setMsg] = useState("");
@@ -90,7 +92,18 @@ export default function Inicio() {
     arr.push(solicitud);
     localStorage.setItem("solicitudes", JSON.stringify(arr));
 
-    alert("✅ Solicitud creada correctamente.");
+    // MOSTRAR MENSAJE MEJORADO
+    alert(`✅ Solicitud creada correctamente.
+
+📌 **IMPORTANTE: Guarda tu número de cédula**
+Tu cédula: ${form.cedula}
+
+Para consultar el estado de tu reserva:
+1. Haz clic en "🔍 Consultar Reserva" en el menú superior
+2. Ingresa tu número de cédula: ${form.cedula}
+
+📧 Recibirás una confirmación cuando el administrador revise tu solicitud.`);
+
     setMsg("✅ Solicitud guardada correctamente.");
 
     // Reset
@@ -109,29 +122,38 @@ export default function Inicio() {
   return (
     <>
       {/* HEADER */}
-      <header className="header">
-        <div className="logo-container">
-          <img src="/img/logo.png" alt="Logo del hotel" className="logo" />
-          <h1>Hotel ULEAM</h1>
-        </div>
+<header className="header">
+  <div className="logo-container">
+    <img src="/img/logo.png" alt="Logo del hotel" className="logo" />
+    <h1>Hotel ULEAM</h1>
+  </div>
 
-        <nav className="navbar">
-          <a href="#" data-section="inicio" onClick={cambiarSeccion("inicio")}>
-            Inicio
-          </a>
-          <a href="#" data-section="reservar" onClick={cambiarSeccion("reservar")}>
-            Reservar
-          </a>
-          <a href="#" data-section="estado" onClick={cambiarSeccion("estado")}>
-            Contactenos
-          </a>
-          <a href="#" data-section="sobre" onClick={cambiarSeccion("sobre")}>
-            Sobre nosotros
-          </a>
+  <nav className="navbar">
+    <a href="#" data-section="inicio" onClick={cambiarSeccion("inicio")}>
+      Inicio
+    </a>
+    <a href="#" data-section="reservar" onClick={cambiarSeccion("reservar")}>
+      Reservar
+    </a>
+    <a 
+      href="#" 
+      onClick={(e) => {
+        e.preventDefault();
+        navigate('/consultar');
+      }}
+    >
+      Consultar Reserva
+    </a>
+    <a href="#" data-section="estado" onClick={cambiarSeccion("estado")}>
+      Contactenos
+    </a>
+    <a href="#" data-section="sobre" onClick={cambiarSeccion("sobre")}>
+      Sobre nosotros
+    </a>
 
-          <Link to="/login">Acceder</Link>
-        </nav>
-      </header>
+    <Link to="/login">Acceder</Link>
+  </nav>
+</header>
 
       {/* MAIN */}
       <main className="main-content">
@@ -151,6 +173,7 @@ export default function Inicio() {
                 Disfruta de una experiencia única donde la comodidad y el servicio de calidad
                 se combinan para ofrecerte una estadía inolvidable.
               </p>
+              {/* ELIMINADA la tarjeta azul de información */}
             </div>
 
             <div className="galeria">
@@ -258,6 +281,8 @@ export default function Inicio() {
               <p id="msg-reserva" className="muted">
                 {msg}
               </p>
+
+              {/* ELIMINADA la nota amarilla también si quieres */}
             </form>
           </section>
         )}
