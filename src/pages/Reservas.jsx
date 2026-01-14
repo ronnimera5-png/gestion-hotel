@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import "../styles/main.css";
 import "../styles/reservas.css";
+import reservasJson from '../data/reservas.json';
 
 export default function Reservas() {
   // Estados para el formulario
@@ -152,7 +153,7 @@ export default function Reservas() {
 
   // ========== FUNCIONES PARA RESERVAS ==========
   
-  const cargarReservas = async () => {
+  const cargarReservas = () => {
     try {
       // 1. Primero intentar cargar desde localStorage
       const datosLocal = localStorage.getItem("reservasAdmin");
@@ -170,60 +171,32 @@ export default function Reservas() {
         }
       }
       
-      // 2. Si no hay en localStorage, cargar del JSON
-      console.log("📭 Cargando reservas del JSON...");
+      // 2. Si no hay en localStorage, usar el JSON importado
+      console.log("📦 Usando JSON importado de src/data/:", reservasJson);
       
-      let jsonData = [];
-      try {
-        // Intentar diferentes rutas
-        const rutas = [
-          '/data/reservas.json',
-          './data/reservas.json',
-          '../data/reservas.json'
-        ];
-        
-        for (const ruta of rutas) {
-          try {
-            const response = await fetch(ruta);
-            if (response.ok) {
-              jsonData = await response.json();
-              console.log("🎉 JSON cargado desde:", ruta);
-              break;
-            }
-          } catch (error) {
-            continue;
-          }
-        }
-        
-        // Si no se cargó nada, usar datos de emergencia
-        if (jsonData.length === 0) {
-          jsonData = [
-            {
-              id: 1,
-              cliente: "Juan Pérez",
-              cedula: "0102030405",
-              ingreso: "2025-01-10",
-              salida: "2025-01-12",
-              tipoHabitacion: "Suite",
-              numeroHabitacion: "201",
-              precioNoche: 120,
-              adultos: 2,
-              ninos: 1,
-              estado: "Confirmada",
-              origen: "JSON inicial"
-            }
-          ];
-        }
-      } catch (error) {
-        console.error("Error cargando JSON:", error);
-        jsonData = [];
-      }
+      // Transformar datos del JSON a tu formato
+      const reservasFormateadas = reservasJson.map((item, index) => ({
+        id: index + 1,
+        cliente: item.cliente,
+        cedula: item.cedula || `0102030${400 + index}`,
+        ingreso: item.ingreso,
+        salida: item.salida,
+        tipoHabitacion: (item.habitacion || "individual").toLowerCase(),
+        numeroHabitacion: item.numeroHabitacion || `20${index + 1}`,
+        precioNoche: item.habitacion === "Suite" ? 120 : item.habitacion === "Doble" ? 80 : 50,
+        adultos: item.adultos || 1,
+        ninos: item.ninos || 0,
+        estado: "Confirmada",
+        origen: "JSON inicial"
+      }));
+      
+      console.log("🔄 Datos formateados:", reservasFormateadas.length, "reservas");
       
       // 3. Guardar en localStorage para la próxima vez
-      localStorage.setItem("reservasAdmin", JSON.stringify(jsonData));
+      localStorage.setItem("reservasAdmin", JSON.stringify(reservasFormateadas));
       
       // 4. Actualizar estado
-      setReservas(jsonData);
+      setReservas(reservasFormateadas);
       
     } catch (error) {
       console.error("❌ ERROR en carga de reservas:", error);
